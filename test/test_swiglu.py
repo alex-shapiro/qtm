@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 import torch
-from torch import Tensor
 
 # Add parent directory to path to import main
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,14 +27,14 @@ class TestSwiGLU:
             rms_norm_epsilon=1e-5,
         )
 
-    def test_initialization(self, config):
+    def test_initialization(self, config: ModelConfig):
         """Test SwiGLU module initializes correctly"""
         swiglu = SwiGLU(config)
         assert swiglu is not None
         assert hasattr(swiglu, "up_gate_projections")
         assert hasattr(swiglu, "down_projection")
 
-    def test_internal_dimension_calculation(self, config):
+    def test_internal_dimension_calculation(self, config: ModelConfig):
         """Test that d_internal is calculated correctly as multiple of 256"""
         swiglu = SwiGLU(config)
         # d_internal = multiple_of(256, 256 * 4.0 * 2/3) = multiple_of(256, 682.67) = 768
@@ -43,15 +42,18 @@ class TestSwiGLU:
         # up_gate_projections projects to d_internal * 2
         assert swiglu.up_gate_projections.out_features == expected_d_internal * 2
 
-    def test_projection_shapes(self, config):
+    def test_projection_shapes(self, config: ModelConfig):
         """Test that projection layers have correct input/output dimensions"""
         swiglu = SwiGLU(config)
         assert swiglu.up_gate_projections.in_features == config.d_hidden
         assert swiglu.down_projection.out_features == config.d_hidden
         # down_projection input should match d_internal
-        assert swiglu.down_projection.in_features == swiglu.up_gate_projections.out_features // 2
+        assert (
+            swiglu.down_projection.in_features
+            == swiglu.up_gate_projections.out_features // 2
+        )
 
-    def test_forward_output_shape(self, config):
+    def test_forward_output_shape(self, config: ModelConfig):
         """Test that forward pass produces correct output shape"""
         swiglu = SwiGLU(config)
         batch_size = 4
@@ -60,14 +62,14 @@ class TestSwiGLU:
         output = swiglu(x)
         assert output.shape == (batch_size, seq_len, config.d_hidden)
 
-    def test_forward_single_sample(self, config):
+    def test_forward_single_sample(self, config: ModelConfig):
         """Test forward pass with a single sample"""
         swiglu = SwiGLU(config)
         x = torch.randn(1, config.d_hidden)
         output = swiglu(x)
         assert output.shape == (1, config.d_hidden)
 
-    def test_forward_preserves_batch_dimensions(self, config):
+    def test_forward_preserves_batch_dimensions(self, config: ModelConfig):
         """Test that forward pass preserves batch dimensions"""
         swiglu = SwiGLU(config)
         for batch_size in [1, 8, 16]:
@@ -75,12 +77,12 @@ class TestSwiGLU:
             output = swiglu(x)
             assert output.shape[0] == batch_size
 
-    def test_no_bias_in_up_gate(self, config):
+    def test_no_bias_in_up_gate(self, config: ModelConfig):
         """Test that up_gate_projections has no bias"""
         swiglu = SwiGLU(config)
         assert swiglu.up_gate_projections.bias is None
 
-    def test_gate_and_up_split(self, config):
+    def test_gate_and_up_split(self, config: ModelConfig):
         """Test that up_gate_projections output splits correctly"""
         swiglu = SwiGLU(config)
         x = torch.randn(2, config.d_hidden)
@@ -91,14 +93,14 @@ class TestSwiGLU:
         # Each chunk should be half of up_gate_projections output
         assert gate.shape[-1] == up_gate_output.shape[-1] // 2
 
-    def test_output_is_not_nan(self, config):
+    def test_output_is_not_nan(self, config: ModelConfig):
         """Test that forward pass doesn't produce NaN values"""
         swiglu = SwiGLU(config)
         x = torch.randn(4, config.d_hidden)
         output = swiglu(x)
         assert not torch.isnan(output).any()
 
-    def test_output_is_not_inf(self, config):
+    def test_output_is_not_inf(self, config: ModelConfig):
         """Test that forward pass doesn't produce infinite values"""
         swiglu = SwiGLU(config)
         x = torch.randn(4, config.d_hidden)
@@ -134,7 +136,7 @@ class TestSwiGLU:
             output = swiglu(x)
             assert output.shape == (2, d_hidden)
 
-    def test_gradient_flow(self, config):
+    def test_gradient_flow(self, config: ModelConfig):
         """Test that gradients flow through the module"""
         swiglu = SwiGLU(config)
         x = torch.randn(2, config.d_hidden, requires_grad=True)

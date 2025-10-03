@@ -70,7 +70,7 @@ class SwiGLU(nn.Module):
             config.d_hidden, d_internal * 2, bias=False, device=config.device
         )
         self.down_projection = nn.Linear(
-            d_internal, config.d_hidden, device=config.device
+            d_internal, config.d_hidden, bias=False, device=config.device
         )
 
     @override
