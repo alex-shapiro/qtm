@@ -62,7 +62,7 @@ class SwiGLU(nn.Module):
     """Swish (SiLU) + GLU activation"""
 
     def __init__(self, config: ModelConfig):
-        super().__init__()  # _pyright: ignore[reportUnknownMemberType]
+        super().__init__()  # pyright: ignore[reportUnknownMemberType]
         d_internal = multiple_of(
             256, config.d_hidden * config.swiglu_expansion_factor * 2 / 3
         )
